@@ -1,0 +1,21 @@
+</<!DOCTYPE html>
+<html>
+    <head>
+        <title>Implementación de una lista</title>
+        <meta charset="utf-8"/>  
+    </head>
+    <body>
+        <h1>Implementación de una lista con objetos</h1>
+        Introduce un número: <br/>
+        <input type="text" id="num" value="" placeholder="Entero" onfocus="cleanData ()" />
+        <button id="addButton" onclick="addNumber (document.getElementById ('num').value);">Añade número</button>
+        <button id="pollButton" onclick="pollNumber ();">Consume número</button>
+
+        <br/><br/>
+
+        <p id="error" style="color:red"></p> 
+        <div id="lista">
+        </div>
+        <script src="Lista.js"></script>
+    </body>
+</html>
