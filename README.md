@@ -5,3 +5,9 @@ Realiza la misma implementación de la tarea de la unidad 03 pero utilizando obj
  - Creacion de la carpeta Lista.
  - Creacion de los ficheros Lista.html y Lista.js
  - Añadir algo de funcionalidad al fichero Lista.js
+
+ ## Version 1.0.1
+ - Añadir funcionalidad al fichero Lista.js
+ - Creacion de la carpeta Lista Ordenada.
+ - Creacion de los ficheros ListaOrd.html y ListaOrd.js 
+ - Añadir funcionalidad al fichero ListaOrd.js

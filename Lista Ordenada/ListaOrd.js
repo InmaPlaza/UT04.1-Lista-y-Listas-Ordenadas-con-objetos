@@ -1,5 +1,3 @@
-"use strict";
-
 /* Funciones que dependen de la pagina */
 var lista = new Lista();
 
@@ -37,7 +35,7 @@ function Person(name,surname){
     this.fullname = function(){
         return this.name + " " + this.surname;
     }
-} 
+}
 
 function Lista(){
     var list = [];
@@ -47,7 +45,7 @@ function Lista(){
     this.isEmpty = function(){
         return (list.length === 0);
     };
-    
+
     //Funcion que devuelve true o false en función de si la lista está llena
     this.isFull = function(){
         return (list.length === MAX_ELEM_LIST);
@@ -58,45 +56,47 @@ function Lista(){
         return list.length;
     };
 
-    //Funcion que añade un nuevo objeto al final de la lista y devuelve el tamaño de la lista una vez añadido
+    //REVISAR!!!!!!!!!
+    //Funcion que añade un nuevo elemento a la lista manteniendo la relación de orden.
+    //Devuelve el tamaño de la lista una vez añadido.
     this.add = function(elem){
         //Si el elemento no es una instancia de Person...
         if (!(elem instanceof Person)){
             throw "El elemento no es una instancia de Person."; //Lanzamos una excepcion
         }
-
-        //Si la lista no esta llena...añade el elemento
-        if (!this.isFull(list)){
-            list.push(elem);
-        } else { //Sino lanza una excepcion diciendo que esta llena
-           throw "La lista está llena. No puedes poner el elemento sobre ella.";
-        }
-        return this.size(list); //Devolvemos el tamaño de la lista
-    };
-
-    //Funcion que añade un nuevo objeto en la posición especificada de la lista,
-    //y devuelve el tamaño de la lista una vez añadido
-    this.addAt = function(elem,index){
-        //Si el elemento no es una instancia de Person...
-        if (!(elem instanceof Person)) {
-            throw "El elemento no es una instancia de Person"; //Lanzamos una excepcion
-        }
-
-        //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
-            throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
-        }
-
+    
         //Si la lista no esta llena...
-        if (!this.isFull(list)){
-            list.splice(index,0,elem); //Añadimos el elemento en el indice indicado
-        } else {
-            throw "La lista está llena. No puedes poner el elemento sobre ella.";
+        if(!this.isFull()){
+            //Si la lista esta vacia...
+            if(this.isEmpty()){
+                list[0] = elem; //Añadimos el elemento en la posicion 0
+            //Si el elemento ultimo de la lista es menor que el elemento que queremos añadir...
+            } else if((list[this.size(list)-1]) < elem){
+                list[this.size(list)] = elem; //Añadimos el elemento en la ultima posicion
+            } else{
+                var aux;
+                var long = this.size(list);
+                var boolean = false;
+                for(var i = 0; i<= long; i++){
+                    aux = list[i]; //Recogemos el valor de cada elemento de la lista
+                    //Si el elemento de la lista es mayor que el nuevo elemento...
+                    if(aux > elem){
+                        boolean = true; //Cambiamos el valor de boolean a true
+                    }
+                    //Si el valor de boolean es true...movemos cada elemento a la derecha
+                    if(boolean){
+                        list[i] = elem;
+                        elem = aux;
+                    }
+                }
+            }
+        } else{
+            throw "La lista está llena. No puedes poner el elemento sobre ella";
         }
-        return this.size(list); //Devolvemos el tamaño de la lista
+        return this.size(list); //Devolvemos la longitud de la lista
     };
 
-    //Funcion que devuelve el objeto de la lista de la posición indicada
+    //Funcion que devuelve el elemento de la lista de la posición indicada
     this.get = function(index){
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
         if(index > this.size(list) || index <= -1){
@@ -135,24 +135,6 @@ function Lista(){
             } 	
         } else{
             throw "El elemento no es una instancia de Person"; //Sino...lanzamos una excepcion
-        }
-        return position; //Devolvemos la posicion
-    };
-
-    //Funcion que devuelve la posición del objeto indicado comenzando por el final. 
-    //Si el objeto no está en la lista devuelve -1
-    this.lastIndexOf = function(elem){
-        var position = -1;
-        
-        //Si el elemento es una instancia de Person...
-        if ((elem instanceof Person)) {
-            //Si la lista no esta vacia...
-            if (!this.isEmpty()){
-                //Asignamos a la variable position,la posicion de la ultima aparicion del elemento indicado
-                position = list.lastIndexOf(elem);  		 		
-            } 	
-        } else{
-            throw "El elemento no es una instancia de Person."; //Sino...lanzamos una excepcion
         }
         return position; //Devolvemos la posicion
     };
@@ -228,27 +210,6 @@ function Lista(){
         }
         return borrado; //Devolvemos el valor de borrado
     };
-
-    //Funcion que reemplaza el elemento de la lista indicado por el índice.
-    //Devuelve el elemento que estaba anteriormente en la lista
-    this.set = function(elem,index){
-        var persona;
-    
-        //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
-            throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
-        } else {
-            //Si el elemento no es una instancia de Person...
-            if(!(elem instanceof Person)){
-                throw "El elemento no es una instancia de Person."; //Lanzamos una excepcion
-            } else {
-                persona = this.get(index); //Recogemos de la lista el indice indicado
-                list.splice(index,1,elem); //Reemplazamos el indice, con el elemento indicado
-            }
-        }
-        return persona; //Devolvemos el valor reemplazado
-    };
-    
 }
 
 function testlist(){
@@ -271,8 +232,7 @@ function testlist(){
 		list.add(per2);
 		list.add(per3);
 		list.add(per4);
-		list.addAt(per5,2);
-		console.log("Añado la persona "+ per5.fullname()+ " en la posicion 2");
+		list.add(per5);
 		list.add(per6); //Para que genere una exepcion
 	} catch (err) {
 		console.log("Intento añadir una 6 persona: " + err);
@@ -290,7 +250,6 @@ function testlist(){
     //clear(list);
 
     console.log ("Borramos a " + per1.fullname() + ": "+ list.removeElement(per1));
-	console.log ("Reemplazo a "+ per6.fullname() +" por: " + list.set(per6,0));
     console.log ("La lista llena: " + list.toString());
 
     try {
