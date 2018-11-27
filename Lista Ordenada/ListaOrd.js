@@ -28,6 +28,72 @@ function pollName (){
  	}		
 }
 
+/*Objetos para el manejo de errores*/
+//Excepción base para ir creando el resto de excepciones.
+function BaseException() {}
+    BaseException.prototype = new Error(); //Herencia del objeto Error.
+    BaseException.prototype.constructor = BaseException; //Definimos el constructor
+    //Sobrescribimos el método toString para personalizarlos
+    BaseException.prototype.toString = function(){
+        //El nombre y el mensaje son propiedades de Error
+	    return this.name + ": " + this.message;
+};
+
+//Excepcion para indicar si un elemento es un objeto Person
+function NotPersonException(value) { 
+	this.name = "NotPersonException";
+	this.message = "El elemento no es un objeto Person: " + value;
+}
+NotPersonException.prototype = new BaseException(); //Heredamos de BaseException
+NotPersonException.prototype.constructor = NotPersonException; //Definimos el constructor
+
+//Excepcion para indicar si una lista esta llena
+function IsFullException(){ 
+	this.name = "IsFull";
+	this.message = "La lista está llena. No puedes poner el elemento sobre ella.";
+}
+IsFullException.prototype = new BaseException(); //Heredamos de BaseException
+IsFullException.prototype.constructor = IsFullException; //Definimos el constructor
+
+// Función anónima que se ejecuta según se define.
+var InputValidator = (function(){ 
+	var InputValidator = {}; //Creamos un objeto vacío
+
+	//Definimos el método validate para el objeto.
+	InputValidator.validate = function(data){ 
+		var validations = [validateNotPerson,validateIsFull]; //Creamos un array con las funciones de validación
+		for(let validation of validations){
+			try {
+				validation(data); //Ejecutamos cada función de validación.
+			}
+			catch (e) {
+				if (e instanceof NotPersonException) { //Recogemos la excepcion NotPersonException si se ha producido
+					throw e; 
+				}				
+				else if (e instanceof IsFullException) { //Recogemos la excepción isFull si se ha producido
+                    //re-throw
+                    throw e;
+				}
+			}
+		}
+	};
+	return InputValidator; //Devolvemos el dato validado
+
+	function validateNotPerson(data){
+        //Si el elemento no es una instancia de Person...
+		if(!(elem instanceof Person)){
+			throw new NotPersonException(data); //Lanzamos la excepcion
+		}
+    }
+    
+	function validateIsFull(objeto){
+        //Si la lista esta llena...
+		if (objeto.isFull()){ 
+			throw new IsFullException(); //Lanzamos la excepcion
+		 } 
+	}
+})();
+
 /* Objetos de la pagina */
 function Person(name,surname){
     this.name = name;
@@ -56,50 +122,55 @@ function Lista(){
         return list.length;
     };
 
-    //REVISAR!!!!!!!!!
     //Funcion que añade un nuevo elemento a la lista manteniendo la relación de orden.
     //Devuelve el tamaño de la lista una vez añadido.
     this.add = function(elem){
         //Si el elemento no es una instancia de Person...
-        if (!(elem instanceof Person)){
-            throw "El elemento no es una instancia de Person."; //Lanzamos una excepcion
-        }
+        InputValidator.validate(elem);
     
         //Si la lista no esta llena...
         if(!this.isFull()){
             //Si la lista esta vacia...
             if(this.isEmpty()){
-                list[0] = elem; //Añadimos el elemento en la posicion 0
-            //Si el elemento ultimo de la lista es menor que el elemento que queremos añadir...
-            } else if((list[this.size(list)-1]) < elem){
-                list[this.size(list)] = elem; //Añadimos el elemento en la ultima posicion
+                list.unshift(elem); //Añadimos el elemento al principio de la lista
+            //Sino...buscamos un indice mayor al indice del elemento dado
             } else{
-                var aux;
-                var long = this.size(list);
-                var boolean = false;
-                for(var i = 0; i<= long; i++){
-                    aux = list[i]; //Recogemos el valor de cada elemento de la lista
-                    //Si el elemento de la lista es mayor que el nuevo elemento...
-                    if(aux > elem){
-                        boolean = true; //Cambiamos el valor de boolean a true
-                    }
-                    //Si el valor de boolean es true...movemos cada elemento a la derecha
-                    if(boolean){
-                        list[i] = elem;
-                        elem = aux;
-                    }
+                var mayor = -1;
+                var index = 0;
+                var length = this.size();
+
+                //Mientras mayor sea igual a -1 y el indice sea menor que el tamaño de la lista
+                while(mayor == -1 && index < length ){ 
+                    //Comparamos entre nombres y apellidos
+
+                   //Si el primer apellido que estamos comparando se encuentra antes que el segundo...
+                    if((list[index].surname).localeCompare(elem.surname) == -1){
+                        index++; //Incrementamos la variable indice en 1  
+                    //Si los apellidos son iguales...    
+                    }else if ((list[index].surname).localeCompare(elem.surname) == 0){
+                        //Si el primer nombre que estamos comparando se encuentra antes que el segundo...
+                        if((list[index].name).localeCompare(elem.name) == -1){
+                            index++; //Incrementamos la variable indice en 1
+                        }else{
+                            mayor = index; //Asignamos a mayor el valor de index
+                        }    
+                    }else{
+                        mayor = index; //Asignamos a mayor el valor de index
+                    }  
                 }
+                //Añadimos el elemento en el indice indicado
+                list.splice(index,0,elem);
             }
-        } else{
+        }else{
             throw "La lista está llena. No puedes poner el elemento sobre ella";
         }
-        return this.size(list); //Devolvemos la longitud de la lista
+        return this.size(); //Devolvemos la longitud de la lista
     };
 
     //Funcion que devuelve el elemento de la lista de la posición indicada
     this.get = function(index){
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         }
         else {
@@ -112,8 +183,8 @@ function Lista(){
         var str = "";
 
         //Si la lista no esta vacia...
-        if (!this.isEmpty(list)){
-            var length = this.size(list); //Recogemos su tamaño en una variable	
+        if (!this.isEmpty()){
+            var length = this.size(); //Recogemos su tamaño en una variable	
             for (var i = 0; i < length-1; i++){ //Recorremos la lista y vamos recogiendo los valores añadiendo el "-"
                 str = str + list[i].fullname() + " - ";
             } 		 		
@@ -183,7 +254,7 @@ function Lista(){
         var persona;
 
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         } else {
             persona = list.splice(index,1); //Eliminamos el elemento con el indice indicado
@@ -217,9 +288,9 @@ function testlist(){
 
     var per1 = new Person("Laura","Nieto");
     var per2 = new Person("Roberto","Paton");
-    var per3 = new Person("Ana","Montero");
+    var per3 = new Person("Ana","Garcia");
     var per4 = new Person("Raul","Garcia");
-    var per5 = new Person("Maria","Fernandez");
+    var per5 = new Person("Maria","Paton");
     var per6 = new Person("Jesus","Jimenez");
 
     console.log ("Capacidad: " + list.capacity());
@@ -242,7 +313,6 @@ function testlist(){
     console.log ("Recogo el elemento de la posicion 3: " + list.get(3));
     
     console.log ("¿Esta "+ per1.fullname() + " en la lista?: " + list.indexOf(per1));	 	
-    console.log ("¿Esta "+ per6.fullname() + " en la lista?: " + list.lastIndexOf(per6));
     
     console.log ("El primer elemento de la lista: " + list.firstElement());
     console.log ("El ultimo elemento de la lista: " + list.lastElement());
