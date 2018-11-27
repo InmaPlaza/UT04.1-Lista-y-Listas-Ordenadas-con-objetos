@@ -30,7 +30,74 @@ function pollName (){
  	}		
 }
 
+/*Objetos para el manejo de errores*/
+//Excepción base para ir creando el resto de excepciones.
+function BaseException() {}
+    BaseException.prototype = new Error(); //Herencia del objeto Error.
+    BaseException.prototype.constructor = BaseException; //Definimos el constructor
+    //Sobrescribimos el método toString para personalizarlos
+    BaseException.prototype.toString = function(){
+        //El nombre y el mensaje son propiedades de Error
+	    return this.name + ": " + this.message;
+};
+
+//Excepcion para indicar si un elemento es un objeto Person
+function NotPersonException(value) { 
+	this.name = "NotPersonException";
+	this.message = "El elemento no es un objeto Person: " + value;
+}
+NotPersonException.prototype = new BaseException(); //Heredamos de BaseException
+NotPersonException.prototype.constructor = NotPersonException; //Definimos el constructor
+
+//Excepcion para indicar si una lista esta llena
+function IsFullException(){ 
+	this.name = "IsFull";
+	this.message = "La lista está llena. No puedes poner el elemento sobre ella.";
+}
+IsFullException.prototype = new BaseException(); //Heredamos de BaseException
+IsFullException.prototype.constructor = IsFullException; //Definimos el constructor
+
+// Función anónima que se ejecuta según se define.
+var InputValidator = (function(){ 
+	var InputValidator = {}; //Creamos un objeto vacío
+
+	//Definimos el método validate para el objeto.
+	InputValidator.validate = function(data){ 
+		var validations = [validateNotPerson,validateIsFull]; //Creamos un array con las funciones de validación
+		for(let validation of validations){
+			try {
+				validation(data); //Ejecutamos cada función de validación.
+			}
+			catch (e) {
+				if (e instanceof NotPersonException) { //Recogemos la excepcion NotPersonException si se ha producido
+					throw e; 
+				}				
+				else if (e instanceof IsFullException) { //Recogemos la excepción isFull si se ha producido
+                    //re-throw
+                    throw e;
+				}
+			}
+		}
+	};
+	return InputValidator; //Devolvemos el dato validado
+
+	function validateNotPerson(data){
+        //Si el elemento no es una instancia de Person...
+		if(!(elem instanceof Person)){
+			throw new NotPersonException(data); //Lanzamos la excepcion
+		}
+    }
+    
+	function validateIsFull(objeto){
+        //Si la lista esta llena...
+		if (objeto.isFull()){ 
+			throw new IsFullException(); //Lanzamos la excepcion
+		 } 
+	}
+})();
+
 /* Objetos de la pagina */
+
 function Person(name,surname){
     this.name = name;
     this.surname = surname;
@@ -61,45 +128,37 @@ function Lista(){
     //Funcion que añade un nuevo objeto al final de la lista y devuelve el tamaño de la lista una vez añadido
     this.add = function(elem){
         //Si el elemento no es una instancia de Person...
-        if (!(elem instanceof Person)){
-            throw "El elemento no es una instancia de Person."; //Lanzamos una excepcion
-        }
+        InputValidator.validate(elem);
+        //Si la lista esta llena...
+        InputValidator.validate(this);
 
-        //Si la lista no esta llena...añade el elemento
-        if (!this.isFull(list)){
-            list.push(elem);
-        } else { //Sino lanza una excepcion diciendo que esta llena
-           throw "La lista está llena. No puedes poner el elemento sobre ella.";
-        }
-        return this.size(list); //Devolvemos el tamaño de la lista
+        list.push(elem); //Añadimos el elemento a la lista
+
+        return this.size(); //Devolvemos el tamaño de la lista
     };
 
     //Funcion que añade un nuevo objeto en la posición especificada de la lista,
     //y devuelve el tamaño de la lista una vez añadido
     this.addAt = function(elem,index){
         //Si el elemento no es una instancia de Person...
-        if (!(elem instanceof Person)) {
-            throw "El elemento no es una instancia de Person"; //Lanzamos una excepcion
-        }
+        InputValidator.validate(elem);
+        //Si la lista esta llena...
+        InputValidator.validate(this);
 
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         }
-
-        //Si la lista no esta llena...
-        if (!this.isFull(list)){
+        else{
             list.splice(index,0,elem); //Añadimos el elemento en el indice indicado
-        } else {
-            throw "La lista está llena. No puedes poner el elemento sobre ella.";
         }
-        return this.size(list); //Devolvemos el tamaño de la lista
+        return this.size(); //Devolvemos el tamaño de la lista
     };
 
     //Funcion que devuelve el objeto de la lista de la posición indicada
     this.get = function(index){
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         }
         else {
@@ -112,8 +171,8 @@ function Lista(){
         var str = "";
 
         //Si la lista no esta vacia...
-        if (!this.isEmpty(list)){
-            var length = this.size(list); //Recogemos su tamaño en una variable	
+        if (!this.isEmpty()){
+            var length = this.size(); //Recogemos su tamaño en una variable	
             for (var i = 0; i < length-1; i++){ //Recorremos la lista y vamos recogiendo los valores añadiendo el "-"
                 str = str + list[i].fullname() + " - ";
             } 		 		
@@ -201,7 +260,7 @@ function Lista(){
         var persona;
 
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         } else {
             persona = list.splice(index,1); //Eliminamos el elemento con el indice indicado
@@ -235,7 +294,7 @@ function Lista(){
         var persona;
     
         //Si el indice es mayor que el tamaño de la lista o es menor o igual que -1...
-        if(index > this.size(list) || index <= -1){
+        if(index > this.size() || index <= -1){
             throw "El indice esta fuera de los limites de la lista."; //Lanzamos una excepcion
         } else {
             //Si el elemento no es una instancia de Person...
@@ -270,12 +329,12 @@ function testlist(){
 		list.add(per1);
 		list.add(per2);
 		list.add(per3);
-		list.add(per4);
+        list.add(per4);
+        console.log("Añado la persona "+ per5.fullname()+ " en la posicion 2");
 		list.addAt(per5,2);
-		console.log("Añado la persona "+ per5.fullname()+ " en la posicion 2");
 		list.add(per6); //Para que genere una exepcion
 	} catch (err) {
-		console.log("Intento añadir una 6 persona: " + err);
+		console.log("Añadimos una persona más: " + err);
     }
     
     console.log ("La lista llena: " + list.toString());
